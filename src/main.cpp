@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <gl/GL.h>
 #include <gl/GLU.h>
+#include <iostream>
 
 HGLRC		hRC = NULL;		// permanent rendering context
 HDC			hDC = NULL;		// private Graphics Device Interface device context
@@ -65,11 +66,13 @@ const static float TRANSLATE_SPEED = 0.05f;
 const static float ROT_SPEED = 2.5f;
 float xTriTrans = 0;
 float yTriTrans = 0;
-float zTriTrans = 0;
+float zTriTrans = -8.0f;
 float xQuadTrans = 0;
 float yQuadTrans = 0;
-float zQuadTrans = 0;
-float triRot = 0;
+float zQuadTrans = -8.0f;
+float triRotX = 0;
+float triRotY = 0;
+float triRotZ = 0;
 float quadRot = 0;
 char rotAxis = 'x';
 bool doTriRot = TRUE;
@@ -79,8 +82,6 @@ int DrawGLScene(GLvoid)
 {
 	// clear the screen and the depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	// reset the modelview matrix
-	glLoadIdentity();
 
 	if (keys['I'])
 		yQuadTrans += TRANSLATE_SPEED;
@@ -124,32 +125,85 @@ int DrawGLScene(GLvoid)
 		rotSpeed *= 10.0f;
 
 	if (keys[VK_OEM_COMMA]) {
-		if (doTriRot)
-			triRot -= rotSpeed;
+		if (doTriRot) {
+			switch (rotAxis) {
+			case 'x': triRotX -= rotSpeed; break;
+			case 'y': triRotY -= rotSpeed; break;
+			case 'z': triRotZ -= rotSpeed; break;
+			}
+		}
 		else
 			quadRot -= rotSpeed;
 	}
 	if (keys[VK_OEM_PERIOD]) {
-		if (doTriRot)
-			triRot += rotSpeed;
+		if (doTriRot) {
+			switch (rotAxis) {
+			case 'x': triRotX += rotSpeed; break;
+			case 'y': triRotY += rotSpeed; break;
+			case 'z': triRotZ += rotSpeed; break;
+			}
+		}
 		else
 			quadRot += rotSpeed;
 	}
 
+	if (keys['C']) {
+		xTriTrans = 0;
+		yTriTrans = 0;
+		zTriTrans = 0;
+		xQuadTrans = 0;
+		yQuadTrans = 0;
+		zQuadTrans = 0;
+		triRotX = 0;
+		triRotY = 0;
+		triRotZ = 0;
+		quadRot = 0;
+	}
+
+	glLoadIdentity();
 
 	glTranslatef(xTriTrans, yTriTrans, zTriTrans);
 
-	glRotatef(triRot,
-		rotAxis == 'x' ? 1.0f : 0,
-		rotAxis == 'y' ? 1.0f : 0,
-		rotAxis == 'z' ? 1.0f : 0);
+	glRotatef(triRotX, 1.0f, 0, 0);
+	glRotatef(triRotY, 0, 1.0f, 0);
+	glRotatef(triRotZ, 0, 0, 1.0f);
 
 	glBegin(GL_TRIANGLES);
-		glColor3f(0.2f, 0, 0.8f);
-		glVertex3f(-1.0f, -1.0f, -5.0f);
-		glVertex3f(1.0f, -1.0f, -5.0f);
-		glColor3f(0.1f, 0, 0.4f);
-		glVertex3f(0.0f, 1.0f, -2.0f);
+		glColor3f(1.0f, 1.0f, 1.0f);
+		//glColor3f(1.0f, 1.0f, 1.0f);
+		glVertex3f(0.0f, 1.0f, 0.0f);
+		glColor3f(0.3f, 0.3f, 0.3f);
+		//glColor3f(0, 0, 1.0f);
+		glVertex3f(1.0f, -1.0f, 1.0f);
+		//glColor3f(1.0f, 0, 0);
+		glVertex3f(-1.0f, -1.0f, 1.0f);
+
+		glColor3f(1.0f, 0, 0);
+		//glColor3f(1.0f, 1.0f, 1.0f);
+		glVertex3f(0.0f, 1.0f, 0.0f);
+		glColor3f(0.3f, 0, 0);
+		//glColor3f(0, 1.0f, 0);
+		glVertex3f(0.0f, -1.0f, -1.0f);
+		//glColor3f(0, 0, 1.0f);
+		glVertex3f(1.0f, -1.0f, 1.0f);
+
+		glColor3f(0, 1.0f, 0);
+		//glColor3f(1.0f, 1.0f, 1.0f);
+		glVertex3f(0.0f, 1.0f, 0.0f);
+		glColor3f(0, 0.3f, 0);
+		//glColor3f(1.0f, 0, 0);
+		glVertex3f(-1.0f, -1.0f, 1.0f);
+		//glColor3f(0, 1.0f, 0);
+		glVertex3f(0.0f, -1.0f, -1.0f);
+
+		glColor3f(0, 0, 1.0f);
+		//glColor3f(1.0f, 0, 0);
+		glVertex3f(-1.0f, -1.0f, 1.0f);
+		glColor3f(0, 0, 0.3f);
+		//glColor3f(0, 0, 1.0f);
+		glVertex3f(1.0f, -1.0f, 1.0f);
+		//glColor3f(0, 1.0f, 0);
+		glVertex3f(0.0f, -1.0f, -1.0f);
 	glEnd();
 
 	glLoadIdentity();
@@ -164,10 +218,10 @@ int DrawGLScene(GLvoid)
 	glColor3f(0.25f, 0.5f, 1.0f);
 
 	glBegin(GL_QUADS);
-		glVertex3f(-1.0f, 1.0f, -2.0f);
-		glVertex3f(1.0f, 1.0f, -5.0f);
-		glVertex3f(1.0f, -1.0f, -5.0f);
-		glVertex3f(-1.0f, -1.0f, -5.0f);
+		glVertex3f(-1.0f, 1.0f, 0.0f);
+		glVertex3f(1.0f, 1.0f, -1.0f);
+		glVertex3f(1.0f, -1.0f, -2.0f);
+		glVertex3f(-1.0f, -1.0f, -3.0f);
 	glEnd();
 
 	return TRUE;
@@ -461,14 +515,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, // window handle
 }
 
 
+// from https://www.gamedev.net/topic/509479-routing-stdout-to-windowconsole
+void MakeConsole()
+{
+#ifdef _DEBUG
+	AllocConsole();
+
+	FILE *outstream_ptr;
+	freopen_s(&outstream_ptr, "CONOUT$", "wb", stdout);
+#endif
+}
+
+
 int WINAPI WinMain(HINSTANCE hInstance,	// handle to this instance
 	HINSTANCE hPrevInstance,	// handle to previous instance (always NULL)
 	LPSTR lpCmdLine,	// command line parameters
 	int nCmdShow)	// how the window is shown (maximized, minimized, etc.)
 {
+	MakeConsole();
+
 	MSG msg;	// Windows message structure
 	BOOL done = FALSE;	// loop flag
-
+	
 	// try to create the window
 	if (!CreateGLWindow(L"ObjViewer", 640, 480, 16, fullscreen)) {
 		return 0;
@@ -519,4 +587,3 @@ int WINAPI WinMain(HINSTANCE hInstance,	// handle to this instance
 	KillGLWindow();
 	return (msg.wParam);
 }
-
