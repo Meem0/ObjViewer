@@ -61,6 +61,19 @@ int InitGL(GLvoid)
 	return TRUE;
 }
 
+const static float TRANSLATE_SPEED = 0.05f;
+const static float ROT_SPEED = 2.5f;
+float xTriTrans = 0;
+float yTriTrans = 0;
+float zTriTrans = 0;
+float xQuadTrans = 0;
+float yQuadTrans = 0;
+float zQuadTrans = 0;
+float triRot = 0;
+float quadRot = 0;
+char rotAxis = 'x';
+bool doTriRot = TRUE;
+
 // draw the scene
 int DrawGLScene(GLvoid)
 {
@@ -68,6 +81,94 @@ int DrawGLScene(GLvoid)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// reset the modelview matrix
 	glLoadIdentity();
+
+	if (keys['I'])
+		yQuadTrans += TRANSLATE_SPEED;
+	if (keys['K'])
+		yQuadTrans -= TRANSLATE_SPEED;
+	if (keys['J'])
+		xQuadTrans -= TRANSLATE_SPEED;
+	if (keys['L'])
+		xQuadTrans += TRANSLATE_SPEED;
+	if (keys['Y'])
+		zQuadTrans -= TRANSLATE_SPEED;
+	if (keys['H'])
+		zQuadTrans += TRANSLATE_SPEED;
+
+	if (keys['W'])
+		yTriTrans += TRANSLATE_SPEED;
+	if (keys['S'])
+		yTriTrans -= TRANSLATE_SPEED;
+	if (keys['A'])
+		xTriTrans -= TRANSLATE_SPEED;
+	if (keys['D'])
+		xTriTrans += TRANSLATE_SPEED;
+	if (keys['R'])
+		zTriTrans -= TRANSLATE_SPEED;
+	if (keys['F'])
+		zTriTrans += TRANSLATE_SPEED;
+
+	if (keys['T'])
+		doTriRot = TRUE;
+	if (keys['Q'])
+		doTriRot = FALSE;
+	if (keys['X'])
+		rotAxis = 'x';
+	if (keys['Y'])
+		rotAxis = 'y';
+	if (keys['Z'])
+		rotAxis = 'z';
+
+	float rotSpeed = ROT_SPEED;
+	if (keys[VK_SHIFT])
+		rotSpeed *= 10.0f;
+
+	if (keys[VK_OEM_COMMA]) {
+		if (doTriRot)
+			triRot -= rotSpeed;
+		else
+			quadRot -= rotSpeed;
+	}
+	if (keys[VK_OEM_PERIOD]) {
+		if (doTriRot)
+			triRot += rotSpeed;
+		else
+			quadRot += rotSpeed;
+	}
+
+
+	glTranslatef(xTriTrans, yTriTrans, zTriTrans);
+
+	glRotatef(triRot,
+		rotAxis == 'x' ? 1.0f : 0,
+		rotAxis == 'y' ? 1.0f : 0,
+		rotAxis == 'z' ? 1.0f : 0);
+
+	glBegin(GL_TRIANGLES);
+		glColor3f(0.2f, 0, 0.8f);
+		glVertex3f(-1.0f, -1.0f, -5.0f);
+		glVertex3f(1.0f, -1.0f, -5.0f);
+		glColor3f(0.1f, 0, 0.4f);
+		glVertex3f(0.0f, 1.0f, -2.0f);
+	glEnd();
+
+	glLoadIdentity();
+
+	glTranslatef(xQuadTrans, yQuadTrans, zQuadTrans);
+
+	glRotatef(quadRot,
+		rotAxis == 'x' ? 1.0f : 0,
+		rotAxis == 'y' ? 1.0f : 0,
+		rotAxis == 'z' ? 1.0f : 0);
+
+	glColor3f(0.25f, 0.5f, 1.0f);
+
+	glBegin(GL_QUADS);
+		glVertex3f(-1.0f, 1.0f, -2.0f);
+		glVertex3f(1.0f, 1.0f, -5.0f);
+		glVertex3f(1.0f, -1.0f, -5.0f);
+		glVertex3f(-1.0f, -1.0f, -5.0f);
+	glEnd();
 
 	return TRUE;
 }
