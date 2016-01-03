@@ -4,15 +4,20 @@
 #include <gl/GL.h>
 #include <gl/GLU.h>
 #include <iostream>
+#include "ObjParser.h"
+#include "Draw.h"
+#include "Model.h"
+#include "Input.h"
 
 HGLRC		hRC = NULL;		// permanent rendering context
 HDC			hDC = NULL;		// private Graphics Device Interface device context
 HWND		hWnd = NULL;	// window handle
 HINSTANCE	hInstance;		// application instance
 
-bool keys[256];			// pressed keys
 bool active = TRUE;		// is the window active (not minimized)
 bool fullscreen = FALSE;
+bool wasFullscreenToggled = FALSE;	// ensure fullscreen is only toggled once per key press
+Input::KeyEventHandler keyEventHandler;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -35,7 +40,7 @@ GLvoid ResizeGLScene(GLsizei width, GLsizei height)
 		45.0f,									// field of view
 		(GLdouble)width / (GLdouble)height,		// aspect ratio
 		0.1f,									// near clipping plane
-		100.0f);								// far clipping plane
+		1000.0f);								// far clipping plane
 
 	// reset the modelview matrix
 	glMatrixMode(GL_MODELVIEW);
@@ -49,7 +54,7 @@ int InitGL(GLvoid)
 	glShadeModel(GL_SMOOTH);
 
 	// clear to black
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClearColor(0.1f, 0.1f, 0.1f, 0.1f);
 
 	// setup depth buffer
 	glClearDepth(1.0f);
@@ -62,20 +67,7 @@ int InitGL(GLvoid)
 	return TRUE;
 }
 
-const static float TRANSLATE_SPEED = 0.05f;
-const static float ROT_SPEED = 2.5f;
-float xTriTrans = 0;
-float yTriTrans = 0;
-float zTriTrans = -8.0f;
-float xQuadTrans = 0;
-float yQuadTrans = 0;
-float zQuadTrans = -8.0f;
-float triRotX = 0;
-float triRotY = 0;
-float triRotZ = 0;
-float quadRot = 0;
-char rotAxis = 'x';
-bool doTriRot = TRUE;
+std::tr1::shared_ptr<Model> model;
 
 // draw the scene
 int DrawGLScene(GLvoid)
@@ -83,146 +75,7 @@ int DrawGLScene(GLvoid)
 	// clear the screen and the depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (keys['I'])
-		yQuadTrans += TRANSLATE_SPEED;
-	if (keys['K'])
-		yQuadTrans -= TRANSLATE_SPEED;
-	if (keys['J'])
-		xQuadTrans -= TRANSLATE_SPEED;
-	if (keys['L'])
-		xQuadTrans += TRANSLATE_SPEED;
-	if (keys['Y'])
-		zQuadTrans -= TRANSLATE_SPEED;
-	if (keys['H'])
-		zQuadTrans += TRANSLATE_SPEED;
-
-	if (keys['W'])
-		yTriTrans += TRANSLATE_SPEED;
-	if (keys['S'])
-		yTriTrans -= TRANSLATE_SPEED;
-	if (keys['A'])
-		xTriTrans -= TRANSLATE_SPEED;
-	if (keys['D'])
-		xTriTrans += TRANSLATE_SPEED;
-	if (keys['R'])
-		zTriTrans -= TRANSLATE_SPEED;
-	if (keys['F'])
-		zTriTrans += TRANSLATE_SPEED;
-
-	if (keys['T'])
-		doTriRot = TRUE;
-	if (keys['Q'])
-		doTriRot = FALSE;
-	if (keys['X'])
-		rotAxis = 'x';
-	if (keys['Y'])
-		rotAxis = 'y';
-	if (keys['Z'])
-		rotAxis = 'z';
-
-	float rotSpeed = ROT_SPEED;
-	if (keys[VK_SHIFT])
-		rotSpeed *= 10.0f;
-
-	if (keys[VK_OEM_COMMA]) {
-		if (doTriRot) {
-			switch (rotAxis) {
-			case 'x': triRotX -= rotSpeed; break;
-			case 'y': triRotY -= rotSpeed; break;
-			case 'z': triRotZ -= rotSpeed; break;
-			}
-		}
-		else
-			quadRot -= rotSpeed;
-	}
-	if (keys[VK_OEM_PERIOD]) {
-		if (doTriRot) {
-			switch (rotAxis) {
-			case 'x': triRotX += rotSpeed; break;
-			case 'y': triRotY += rotSpeed; break;
-			case 'z': triRotZ += rotSpeed; break;
-			}
-		}
-		else
-			quadRot += rotSpeed;
-	}
-
-	if (keys['C']) {
-		xTriTrans = 0;
-		yTriTrans = 0;
-		zTriTrans = 0;
-		xQuadTrans = 0;
-		yQuadTrans = 0;
-		zQuadTrans = 0;
-		triRotX = 0;
-		triRotY = 0;
-		triRotZ = 0;
-		quadRot = 0;
-	}
-
-	glLoadIdentity();
-
-	glTranslatef(xTriTrans, yTriTrans, zTriTrans);
-
-	glRotatef(triRotX, 1.0f, 0, 0);
-	glRotatef(triRotY, 0, 1.0f, 0);
-	glRotatef(triRotZ, 0, 0, 1.0f);
-
-	glBegin(GL_TRIANGLES);
-		glColor3f(1.0f, 1.0f, 1.0f);
-		//glColor3f(1.0f, 1.0f, 1.0f);
-		glVertex3f(0.0f, 1.0f, 0.0f);
-		glColor3f(0.3f, 0.3f, 0.3f);
-		//glColor3f(0, 0, 1.0f);
-		glVertex3f(1.0f, -1.0f, 1.0f);
-		//glColor3f(1.0f, 0, 0);
-		glVertex3f(-1.0f, -1.0f, 1.0f);
-
-		glColor3f(1.0f, 0, 0);
-		//glColor3f(1.0f, 1.0f, 1.0f);
-		glVertex3f(0.0f, 1.0f, 0.0f);
-		glColor3f(0.3f, 0, 0);
-		//glColor3f(0, 1.0f, 0);
-		glVertex3f(0.0f, -1.0f, -1.0f);
-		//glColor3f(0, 0, 1.0f);
-		glVertex3f(1.0f, -1.0f, 1.0f);
-
-		glColor3f(0, 1.0f, 0);
-		//glColor3f(1.0f, 1.0f, 1.0f);
-		glVertex3f(0.0f, 1.0f, 0.0f);
-		glColor3f(0, 0.3f, 0);
-		//glColor3f(1.0f, 0, 0);
-		glVertex3f(-1.0f, -1.0f, 1.0f);
-		//glColor3f(0, 1.0f, 0);
-		glVertex3f(0.0f, -1.0f, -1.0f);
-
-		glColor3f(0, 0, 1.0f);
-		//glColor3f(1.0f, 0, 0);
-		glVertex3f(-1.0f, -1.0f, 1.0f);
-		glColor3f(0, 0, 0.3f);
-		//glColor3f(0, 0, 1.0f);
-		glVertex3f(1.0f, -1.0f, 1.0f);
-		//glColor3f(0, 1.0f, 0);
-		glVertex3f(0.0f, -1.0f, -1.0f);
-	glEnd();
-
-	glLoadIdentity();
-
-	glTranslatef(xQuadTrans, yQuadTrans, zQuadTrans);
-
-	glRotatef(quadRot,
-		rotAxis == 'x' ? 1.0f : 0,
-		rotAxis == 'y' ? 1.0f : 0,
-		rotAxis == 'z' ? 1.0f : 0);
-
-	glColor3f(0.25f, 0.5f, 1.0f);
-
-	glBegin(GL_QUADS);
-		glVertex3f(-1.0f, 1.0f, 0.0f);
-		glVertex3f(1.0f, 1.0f, -1.0f);
-		glVertex3f(1.0f, -1.0f, -2.0f);
-		glVertex3f(-1.0f, -1.0f, -3.0f);
-	glEnd();
+	DrawModel(*model);
 
 	return TRUE;
 }
@@ -312,7 +165,7 @@ BOOL CreateGLWindow(wchar_t* title, int width, int height, int bits, bool fullsc
 	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wc.lpfnWndProc = (WNDPROC)WndProc; // attach our message handler
 	wc.cbClsExtra = 0; // nothing
-	wc.cbWndExtra = 0; // ntohing
+	wc.cbWndExtra = 0; // nothing
 	wc.hInstance = hInstance; // attach the hInstance we got earlier
 	wc.hIcon = LoadIcon(NULL, IDI_WINLOGO); // default icon
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW); // arrow cursor
@@ -497,11 +350,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, // window handle
 		return 0;
 	}
 	case WM_KEYDOWN: {	// key pressed
-		keys[wParam] = TRUE;	// update key state array
+		keyEventHandler(true, wParam);
 		return 0;
 	}
 	case WM_KEYUP: {	// key released
-		keys[wParam] = FALSE;	// update key state array
+		keyEventHandler(false, wParam);
 		return 0;
 	}
 	case WM_SIZE: {	// window resized
@@ -533,6 +386,7 @@ int WINAPI WinMain(HINSTANCE hInstance,	// handle to this instance
 	int nCmdShow)	// how the window is shown (maximized, minimized, etc.)
 {
 	MakeConsole();
+	keyEventHandler = Input::GetKeyEventHandler();
 
 	MSG msg;	// Windows message structure
 	BOOL done = FALSE;	// loop flag
@@ -540,6 +394,13 @@ int WINAPI WinMain(HINSTANCE hInstance,	// handle to this instance
 	// try to create the window
 	if (!CreateGLWindow(L"ObjViewer", 640, 480, 16, fullscreen)) {
 		return 0;
+	}
+
+	try {
+		model = ParseObj("test/skyscraper.obj");
+	}
+	catch (std::exception ex) {
+		std::cout << ex.what() << std::endl;
 	}
 
 	// main loop
@@ -560,7 +421,7 @@ int WINAPI WinMain(HINSTANCE hInstance,	// handle to this instance
 		else {
 			if (active) {
 				// quit if escape is pressed
-				if (keys[VK_ESCAPE]) {
+				if (Input::IsKeyDown(VK_ESCAPE)) {
 					done = TRUE;
 				}
 				// draw the scene
@@ -570,9 +431,12 @@ int WINAPI WinMain(HINSTANCE hInstance,	// handle to this instance
 				}
 			}
 
+			if (wasFullscreenToggled) {
+				wasFullscreenToggled = Input::IsKeyDown(VK_F1);
+			}
 			// toggle fullscreen
-			if (keys[VK_F1]) {
-				keys[VK_F1] = FALSE;
+			else if (Input::IsKeyDown(VK_F1)) {
+				wasFullscreenToggled = TRUE;
 
 				KillGLWindow();	// destroy the window
 				fullscreen = !fullscreen;	// toggle the fullscreen flag

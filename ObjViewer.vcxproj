@@ -144,7 +144,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Draw.cpp" />
+    <ClCompile Include="src\Input.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Model.cpp" />
+    <ClCompile Include="src\ObjParser.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Input.h" />
+    <ClInclude Include="src\Model.h" />
+    <ClInclude Include="src\ObjParser.h" />
+    <ClInclude Include="src\Draw.h" />
+    <ClInclude Include="src\VectorLib.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
