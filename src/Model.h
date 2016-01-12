@@ -5,23 +5,30 @@
 #include <vector>
 #include "VectorLib.h"
 
-class Model
-{
-public:
-	Model();
+namespace ObjViewer {
 
-	void AddVert(const Vector3& vert);
-	void AddFace(const std::vector<int>& face);
+	class Model
+	{
+	public:
+		Model();
 
-	const Vector3& GetVert(unsigned int index) const;
-	const std::vector<int>& GetFace(unsigned int index) const;
+		void AddVert(const VectorLib::Vector3& vert);
+		void AddFace(const std::vector<int>& face);
 
-	unsigned int NumVerts() const;
-	unsigned int NumFaces() const;
+		const VectorLib::Vector3& GetVert(unsigned int index) const;
+		const std::vector<int>& GetFace(unsigned int index) const;
 
-private:
-	struct ModelImpl;
-	std::tr1::shared_ptr<ModelImpl> pImpl;
-};
+		const VectorLib::Vector3* GetVertArray() const;
+		const unsigned int* GetFaceArray() const;
+
+		unsigned int NumVerts() const;
+		unsigned int NumFaces() const;
+
+	private:
+		struct ModelImpl;
+		std::shared_ptr<ModelImpl> pImpl;
+	};
+
+}
 
 #endif

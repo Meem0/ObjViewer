@@ -3,8 +3,12 @@
 
 #include <memory>
 
-class Model;
+namespace ObjViewer {
 
-std::tr1::shared_ptr<Model> ParseObj(const char* file);
+	class Model;
+
+	std::shared_ptr<Model> ParseObj(const char* file);
+
+}
 
 #endif

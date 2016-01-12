@@ -1,53 +1,56 @@
 #include "ObjParser.h"
-#include "Model.h"
+
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <iostream>
 
-using namespace std;
-using namespace tr1;
+#include "Model.h"
+#include "Draw.h" // for USE_VBO define
 
-shared_ptr<Model> ParseObj(const char* file)
-{
-	ifstream infile(file);
-	if (!infile) {
-		ostringstream msg;
-		msg << file << " not found";
-		throw exception(msg.str().c_str());
-	}
+namespace ObjViewer {
 
-	shared_ptr<Model> model(new Model());
+	using namespace std;
+	using namespace VectorLib;
 
-	string line, type;
-	while (getline(infile, line)) {
-		istringstream iss(line);
-		if (iss >> type) {
-			if (!type.compare("v")) {
-				Vector3 vert;
-				iss >> vert.x;
-				iss >> vert.y;
-				iss >> vert.z;
+	shared_ptr<Model> ParseObj(const char* file)
+	{
+		ifstream infile(file);
+		if (!infile) {
+			ostringstream msg;
+			msg << file << " not found";
+			throw exception(msg.str().c_str());
+		}
 
-				/*vert.x /= 45.0f;
-				vert.y /= 45.0f;
-				vert.z /= 45.0f;*/
+		shared_ptr<Model> model(new Model());
 
-				model->AddVert(vert);
-			}
-			else if (!type.compare("f")) {
-				vector<int> face;
-				int vertIndex;
-				string token;
-				while (iss >> token) {
-					istringstream vss(token.substr(0, token.find('/')));
-					vss >> vertIndex;
-					face.push_back(vertIndex - 1);
+		string line, type;
+		while (getline(infile, line)) {
+			istringstream iss(line);
+			if (iss >> type) {
+				if (!type.compare("v")) {
+					Vector3 vert;
+					iss >> vert.x;
+					iss >> vert.y;
+					iss >> vert.z;
+
+					model->AddVert(vert);
 				}
-				model->AddFace(face);
+				else if (!type.compare("f")) {
+					vector<int> face;
+					int vertIndex;
+					string token;
+					while (iss >> token) {
+						istringstream vss(token.substr(0, token.find('/')));
+						vss >> vertIndex;
+						face.push_back(vertIndex - 1);
+					}
+					model->AddFace(face);
+				}
 			}
 		}
+
+		return model;
 	}
 
-	return model;
 }

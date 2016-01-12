@@ -1,19 +1,16 @@
 #include "Model.h"
-#include <vector>
-
 #include "Draw.h"
 
-namespace ObjViewer {
+#ifdef USE_VBO
 
-#ifndef USE_VBO
+namespace ObjViewer {
 
 	using namespace std;
 	using namespace VectorLib;
 
-	struct Model::ModelImpl
-	{
+	struct Model::ModelImpl {
 		vector<Vector3> verts;
-		vector<vector<int>> faces;
+		vector<unsigned int> faces;
 	};
 
 	Model::Model() : pImpl(new ModelImpl()) {}
@@ -25,7 +22,16 @@ namespace ObjViewer {
 
 	void Model::AddFace(const vector<int>& face)
 	{
-		pImpl->faces.push_back(face);
+		unsigned int v1 = 1;
+		unsigned int v2 = 2;
+		size_t size = face.size();
+
+		// do a "triangle fan" for faces of order > 3
+		while (v2 < size) {
+			pImpl->faces.push_back(face[0]);
+			pImpl->faces.push_back(face[v1++]);
+			pImpl->faces.push_back(face[v2++]);
+		}
 	}
 
 	const Vector3& Model::GetVert(unsigned int index) const
@@ -39,10 +45,7 @@ namespace ObjViewer {
 
 	const std::vector<int>& Model::GetFace(unsigned int index) const
 	{
-		if (index >= pImpl->faces.size()) {
-			throw out_of_range("face index out of range");
-		}
-		return pImpl->faces[index];
+		throw exception("GetFace not supported");
 	}
 
 	const Vector3* Model::GetVertArray() const
@@ -52,7 +55,7 @@ namespace ObjViewer {
 
 	const unsigned int* Model::GetFaceArray() const
 	{
-		return NULL;
+		return &pImpl->faces.front();
 	}
 
 	unsigned int Model::NumVerts() const
@@ -62,9 +65,9 @@ namespace ObjViewer {
 
 	unsigned int Model::NumFaces() const
 	{
-		return pImpl->faces.size();
+		return pImpl->faces.size() / 3;
 	}
 
-#endif
-
 }
+
+#endif

@@ -8,6 +8,7 @@
 #include "Draw.h"
 #include "Model.h"
 #include "Input.h"
+#include "LoadGL.h"
 
 HGLRC		hRC = NULL;		// permanent rendering context
 HDC			hDC = NULL;		// private Graphics Device Interface device context
@@ -50,6 +51,9 @@ GLvoid ResizeGLScene(GLsizei width, GLsizei height)
 // OpenGL setup
 int InitGL(GLvoid)
 {
+	// load modern GL functions
+	ObjViewer::LoadGLFunctions();
+
 	// smooth shading
 	glShadeModel(GL_SMOOTH);
 
@@ -62,12 +66,15 @@ int InitGL(GLvoid)
 	glDepthFunc(GL_LEQUAL);
 
 	// best perspective calculations
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_DONT_CARE);
+
+	// avoid "z-fighting" with wireframe
+	glPolygonOffset(1.0f, 1.0f);
 
 	return TRUE;
 }
 
-std::tr1::shared_ptr<Model> model;
+std::shared_ptr<ObjViewer::Model> model;
 
 // draw the scene
 int DrawGLScene(GLvoid)
@@ -75,7 +82,7 @@ int DrawGLScene(GLvoid)
 	// clear the screen and the depth buffer
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	DrawModel(*model);
+	ObjViewer::DrawModel(*model);
 
 	return TRUE;
 }
@@ -396,12 +403,23 @@ int WINAPI WinMain(HINSTANCE hInstance,	// handle to this instance
 		return 0;
 	}
 
+	if (__argc < 2) {
+		std::cout << "ERROR: no object file specified in command line parameters" << std::endl;
+		return 0;
+	}
+	const char* inputFile = __argv[1];
+
 	try {
-		model = ParseObj("test/skyscraper.obj");
+		model = ObjViewer::ParseObj(inputFile);
 	}
 	catch (std::exception ex) {
 		std::cout << ex.what() << std::endl;
+		return 0;
 	}
+
+#ifdef USE_VBO
+	ObjViewer::InitVBO(*model);
+#endif
 
 	// main loop
 	while (!done) {
