@@ -8,8 +8,7 @@ WASD to translate
 
 QE to rotate (x/y/z to change axis of rotation)
 
-CV to scale
-
+RF to zoom in / out
 
 Hold shift to speed up any of the above
 
