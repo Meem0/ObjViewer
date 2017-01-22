@@ -2,6 +2,8 @@
 
 To compile in Visual Studio, add glu32.lib and opengl32.lib to Project Settings -> Linker -> Input -> Additional Dependencies.
 
+Test .obj files: http://people.sc.fsu.edu/~jburkardt/data/obj/obj.html
+
 WASD to translate
 
 QE to rotate (x/y/z to change axis of rotation)
